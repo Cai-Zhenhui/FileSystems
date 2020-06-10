@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Debug.h"
 #define BUFFER_SIZE 2048
 TCHAR _Buffer[BUFFER_SIZE];
