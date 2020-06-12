@@ -1,5 +1,4 @@
 #pragma once
-#include <vector>
 #include "Disk.h"
 class DiskManagement
 {
@@ -27,7 +26,16 @@ public:
 	//Return Value:
 	//	true 执行成功
 	//	false 执行失败
-	bool writeBlock(_In_ PhysicalAddress pa, _In_ Block* block);
+	bool writeBlock(_In_ PhysicalAddress pa, _In_ DWORD blockId, _In_ Block* block);
+
+	//Description:
+	//	创建一个虚拟磁盘
+	//Paramter: 
+	//	_In_ __int64 size 磁盘大小
+	//Return Value:
+	//	true 执行成功
+	//	false 执行失败
+	bool generateDisk(_In_ __int64 size);
 private:
 	std::vector<Disk> _ListDisk;
 	

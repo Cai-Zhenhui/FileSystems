@@ -142,11 +142,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Common.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Disk.cpp" />
     <ClCompile Include="DiskManagement.cpp" />
+    <ClCompile Include="Interface.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Partition.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -155,10 +156,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Disk.h" />
     <ClInclude Include="DiskManagement.h" />
+    <ClInclude Include="Interface.h" />
+    <ClInclude Include="Partition.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

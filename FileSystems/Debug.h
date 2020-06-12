@@ -5,12 +5,14 @@
 
 #ifdef UNICODE
 #define tstring wstring
+#define tfopen _wfopen
 #define tsprintf wsprintf
 #define tvsprintf wvsprintf
 #define __TFILE__ __FILEW__
 #define __TFUNCTION__ __FUNCTIONW__
 #else
 #define tstring string
+#define tfopen fopen
 #define tsprintf sprintf
 #define tvsprintf vsprintf
 #define __TFILE__ __FILE__
@@ -26,7 +28,7 @@
 //Return Value:
 //	<0  错误
 //	>=0	输出的字符串长度
-#define Println(_Format,...) DebugPrint(TEXT("调试信息\nFile:%s\nLine:%d Func:%s "##_Format##"\n"),__TFILE__,__LINE__,__TFUNCTION__,__VA_ARGS__)
+#define Println(_Format,...) DebugPrint(TEXT("[调试信息] File:%s Line:%d Func:%s\n"##_Format##"\n"),__TFILE__,__LINE__,__TFUNCTION__,__VA_ARGS__)
 #else
 #define Println(_Format,...)
 #endif // _DEBUG

@@ -21,7 +21,11 @@
 //常量
 
 constexpr auto BlockSize = 1*1024;
+#define MAXFileNameLength 32
+#define MAXUsernameLength 20
+#define MAXPasswordLength 20
 
+#pragma pack(1)
 //文件类型
 enum FILETYPE
 {
@@ -31,16 +35,16 @@ enum FILETYPE
 struct User
 {
 	BYTE id;
-	std::tstring username;
-	std::tstring password;
+	TCHAR username[MAXUsernameLength];
+	TCHAR password[MAXPasswordLength];
 };
 typedef struct User User;
 struct PhysicalAddress
 {
 	DWORD dwKeyDisk;//磁盘特征码
 	BYTE bIdPartition;//分区id
-	DWORD dwBlockStart;//起始块号
-	DWORD dwBlockEnd;//终止块号
+	DWORD dwBlockStart;//文件起始块号
+	DWORD dwBlockEnd;//文件终止块号
 };
 typedef struct PhysicalAddress PhysicalAddress;
 
@@ -82,12 +86,12 @@ struct IndexItemMem
 };
 typedef struct IndexItemMem IndexItemMem;
 
-struct Directory
+struct FileControlBlock
 {
-	std::tstring fileName;
+	TCHAR fileName[MAXFileNameLength];
 	IndexItemMem* pIndexItemMem;
 };
-typedef struct Directory Directory;
+typedef struct FileControlBlock FileControlBlock;
 
 struct Block
 {
@@ -95,3 +99,4 @@ struct Block
 	bool isLoad;
 	struct Block* nextBlock;
 };
+#pragma pack()

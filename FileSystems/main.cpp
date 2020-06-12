@@ -1,16 +1,11 @@
+//cmd命令行接口
 #include "stdafx.h"
 #include <iostream>
-#include "Common.h"
 #include "DiskManagement.h"
 extern std::vector<User> listUser;
 extern int a;
 int main() {
-	Println("中文测试:123 %d %s", 321, TEXT("ABC"));
-	User user;
-	user.id = 20;
-	user.username = TEXT("admin");
-	user.password = TEXT("123");
-	listUser.push_back(user);
 	DiskManagement dm;
+	dm.generateDisk(1024*20);
 	return 0;
 }
