@@ -17,7 +17,7 @@ struct DiskHeader
 	}
 };
 typedef struct DiskHeader DiskHeader;
-#pragma pack(0)
+#pragma pack()
 
 #define DiskPath TEXT(".\\Disk\\")
 #define ExpandName TEXT(".disk")
@@ -27,8 +27,10 @@ class Disk
 {
 public:
 	DiskHeader dh;
+	BYTE bIdDisk;
 	DWORD blocks;
 	FILE* pFile;
+	Partition* currentPartition;
 	Disk();
 	~Disk();
 
@@ -56,13 +58,31 @@ public:
 
 	bool format(DWORD partitions);
 
-	bool load(TCHAR szDiskFileName);
+	bool load(TCHAR* szDiskFileName, BYTE bIdDisk);
 
 	bool save();
 
 	bool create(__int64 size);
+
+	//Description:
+	//	在当前路径所在分区申请一个块
+	//Paramter: 
+	//	_In_ DWORD previousBlock 前一个块的索引 若为0xffffffff，则申请新块
+	//Return Value:
+	//	0 申请失败
+	//	>0 申请成功 返回FAT项索引
+	DWORD mallocBlock(_In_ DWORD previousBlock = 0xffffffff);
+
+	//Description:
+	//	释放当前路径所在分区一个块,及其后续块
+	//Paramter: 
+	//	_In_ DWORD blockId 将要释放的块号
+	//Return Value:
+	//	0 申请失败
+	//	>0 申请成功 返回FAT项索引
+	bool freeBlock(_In_ DWORD blockId);
 private:
-	std::vector<Partition> _PartitionList;
+	std::vector<Partition*> _PartitionList;
 	//std::tstring diskFileName;
 };
 
