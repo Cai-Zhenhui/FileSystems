@@ -123,6 +123,7 @@ bool fMove(_In_ char* szFileName, _In_ char* szTargetPath);
 //	重命名
 //Paramter: 
 //	_In_ char* szFileName 文件名
+//  _In_ char* szNewFileName 新文件名
 //Return Value:
 //	true 执行成功
 //	false 执行失败

@@ -73,7 +73,6 @@ bool DiskManagement::freeBlock(DWORD blockId)
 bool DiskManagement::insertFCB()
 {
     //找到存放当前目录的最后一个数据区 插入新的目录项
-
     DWORD fat = currentsFCB[0].dwIndexFAT;//当前目录的第一个FAT项
     while (fat != EOB) {
         DWORD newFat = currentDisk->currentPartition->FAT[fat];

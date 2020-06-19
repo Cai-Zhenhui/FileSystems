@@ -488,10 +488,12 @@ bool _dIntoSub(char* szFileName) {
 	//从指定块加载目录
 	diskManagement.readFCBItem(currentsFCB[i].dwIndexFAT);
 }
+
 bool fMove(char* szFileName, char* szTargetPath)
 {
 	return false;
 }
+
 bool fRename(char* szFileName, char* szNewFileName)
 {
 	if (!diskManagement.isLoad()) {
@@ -519,6 +521,7 @@ bool fRename(char* szFileName, char* szNewFileName)
 
 	return true;
 }
+
 bool dIntoSub(char* szFileName) {
 	if (!diskManagement.isLoad()) {
 		return false;
@@ -667,7 +670,7 @@ bool dCreate(User& user)
 	return true;
 }
 
-//内部调用
+//内部递归调用
 bool _dDelete(char* szFileName, bool isDeleteDir, bool isRecursive) {
 	if (!dIntoSub(szFileName)) {
 		return false;//子目录不存在
@@ -778,7 +781,7 @@ void showDir()
 	}
 }
 
-//内部调用
+//内部递归调用
 void _showDirTree(char* szFileName,int length) {
 	if (!dIntoSub(szFileName)) {
 		return;//子目录不存在
@@ -807,6 +810,7 @@ void _showDirTree(char* szFileName,int length) {
 	delete[] buffer;
 	dIntoSub(currentIIM[1].fileName);
 }
+
 void showDirTree()
 {
 	if (!diskManagement.isLoad()) {
