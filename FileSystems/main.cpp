@@ -30,8 +30,8 @@ void intputPassword(char* password) {
 }
 
 int main() {
-
     User user = { 0 };
+
     {
         int times = 0;
         do
@@ -83,13 +83,19 @@ int main() {
             cin >> par;
             printf("文件号:%d\n", fOpen(&par[0], FM_Write));
         }
+        else if (cmd.compare("seek") == 0) {
+            DWORD offset;
+            DWORD fileId;
+            cin >> fileId >> offset;
+            cout << fSeek(fileId, offset) << endl;
+        }
         else if (cmd.compare("read") == 0) {
             //cin >> par;
             DWORD fileId;
             int size;
             cin >> fileId >> size;
-            char* buffer = new char[size];
-            memset(buffer, 0, size);
+            char* buffer = new char[size+1];
+            memset(buffer, 0, size + 1);
 
             cout<<"实际读取字节数:"<<fRead(buffer, size, 1, fileId)<<endl;
 
@@ -124,6 +130,11 @@ int main() {
         }
         else if (cmd.compare("tree") == 0) {
             showDirTree();
+        }
+        else if (cmd.compare("format") == 0) {
+            DWORD diskId, partitionId;
+            cin >> diskId >> partitionId;
+            cout << diskManagement.format(diskId - 1, partitionId - 1) << endl;
         }
         
         cout << endl;

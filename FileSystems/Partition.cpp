@@ -33,7 +33,10 @@ bool Partition::format()
 		FAT.push_back(DWORD(0));
 	}
 	FAT[0] = EOB;//分区根目录结束
-	return false;
+	for (int i = 0; i < BlockList.size(); ++i) {
+		BlockList[i]->clear();
+	}
+	return true;
 }
 
 auto Partition::getFATItem()

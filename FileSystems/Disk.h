@@ -56,7 +56,14 @@ public:
 	//	false 执行失败
 	bool writeBlock(_In_ PhysicalAddress pa, _In_ DWORD blockId, _In_ Block* block);
 
-	bool format(DWORD partitions);
+	//Description:
+	//	格式化指定分区
+	//Paramter: 
+	//	BYTE bIdPartition;//分区id
+	//Return Value:
+	//	false 失败
+	//	true 成功
+	bool format(DWORD bIdPartition);
 
 	bool load(TCHAR* szDiskFileName, BYTE bIdDisk);
 

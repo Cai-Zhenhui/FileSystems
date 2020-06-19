@@ -89,14 +89,15 @@ bool Disk::writeBlock(PhysicalAddress pa, DWORD blockId, Block* block)
     return _PartitionList[pa.bIdPartition]->writeBlock(blockId, block);
 }
 
-bool Disk::format(DWORD partitions)
+bool Disk::format(DWORD bIdPartition)
 {
     if (pFile == NULL) {
         return false;
     }
-    //写入分区表
-
-    return true;
+    if (bIdPartition >= _PartitionList.size()) {
+        return false;
+    }
+    return _PartitionList[bIdPartition]->format();
 }
 
 bool Disk::load(TCHAR* szDiskFileName, BYTE bIdDisk)

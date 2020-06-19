@@ -195,6 +195,17 @@ bool DiskManagement::readFCBItem(DWORD blockId)
     return true;
 }
 
+bool DiskManagement::format(BYTE bIdDisk, BYTE bIdPartition)
+{
+    if (!isLoad()) {
+        return false;
+    }
+    if (bIdDisk >= _DiskList.size()) {
+        return false;
+    }
+    return _DiskList[bIdDisk]->format(bIdPartition);
+}
+
 void DiskManagement::loadDisk()
 {
     WIN32_FIND_DATA wfd;

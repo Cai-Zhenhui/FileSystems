@@ -191,6 +191,42 @@ DWORD fOpen(char* szFileName, BYTE bFileMode)
 	return ret;
 }
 
+DWORD fSeek(DWORD fileId, long _Offset, int _Origin)
+{
+	int i = 0;//在一打开目录中的索引
+	for (; i < openListIIM.size(); ++i) {
+		if (openListIIM[i] == fileId) {
+			break;
+		}
+	}
+	if (i >= openListIIM.size()) {
+		return -1;//目标文件不存在
+	}
+
+	int newPos = 0;
+	switch (_Origin)
+	{
+	case SEEK_SET: {
+		newPos = _Offset;
+		break;
+	}
+	case SEEK_CUR: {
+		newPos = openListIIM[i].nPos + _Offset;
+		break;
+	}
+	case SEEK_END: {
+		newPos = (BlockSize - 1) + _Offset;
+		break;
+	}
+	}
+
+	if (newPos / (BlockSize - 1) != 0) {
+		//越界
+		return -1;
+	}
+	return openListIIM[i].nPos = newPos;
+}
+
 DWORD fRead(void* _Buffer, size_t _ElementSize, size_t _ElementCount, DWORD fileId)
 {
 	size_t size = _ElementSize * _ElementCount;
@@ -360,7 +396,15 @@ bool fClose(DWORD fileId)
 	strcpy(szFileNameOld, openListIIM[i].fileName);//暂存要删除的文件名
 
 	diskManagement.updateFCB(j, szFileNameOld);
+	openListIIM.erase(openListIIM.begin() + i);
+	openListSFCB.erase(openListSFCB.begin() + i);
 	return true;
+}
+
+bool fSearch(DWORD fileId)
+{
+	
+	return false;
 }
 
 bool dIntoSub(char* szFileName) {

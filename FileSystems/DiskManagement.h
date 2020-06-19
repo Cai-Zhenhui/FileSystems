@@ -103,6 +103,15 @@ public:
 	//	>0 申请成功 返回FAT项索引
 	bool readFCBItem(_In_ DWORD blockId);
 
+	//Description:
+	//	格式化指定分区
+	//Paramter: 
+	//	BYTE bIdDisk;//磁盘id
+	//	BYTE bIdPartition;//分区id
+	//Return Value:
+	//	false 失败
+	//	true 成功
+	bool format(BYTE bIdDisk, BYTE bIdPartition);
 private:
 	std::vector<Disk*> _DiskList;
 	

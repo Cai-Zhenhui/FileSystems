@@ -43,6 +43,17 @@ bool fDelete(_In_ char* szFileName);
 DWORD fOpen(_In_ char* szFileName, _In_ BYTE bFileMode);
 
 //Description:
+//	调整游标
+//Paramter: 
+//  _In_ DWORD fileId 文件号
+//  _In_ long _Offset 偏移
+//  _In_ int _Origin = SEEK_SET 起始位置
+//Return Value:
+//	 执行成功
+//	-1 执行失败
+DWORD fSeek(_In_ DWORD fileId, _In_ long _Offset, _In_ int _Origin = SEEK_SET);
+
+//Description:
 //	读取已打开的文件
 //Paramter: 
 //	_In_reads_bytes_(_ElementSize* _ElementCount) void * _Buffer 的内容
@@ -78,6 +89,15 @@ DWORD fWrite(_In_reads_bytes_(_ElementSize* _ElementCount) void const* _Buffer,
 //	true 执行成功
 //	false 执行失败
 bool fClose(_In_ DWORD fileId);
+
+//Description:
+//	搜索文件
+//Paramter: 
+//	_In_ char* szFileName 文件名
+//Return Value:
+//	true 执行成功
+//	false 执行失败
+bool fSearch(_In_ DWORD fileId);
 
 //Description:
 //	进入当前目录下的一个子目录

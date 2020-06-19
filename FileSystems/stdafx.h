@@ -49,7 +49,7 @@ struct User
 typedef struct User User;
 struct PhysicalAddress
 {
-	BYTE bIdDisk;//磁盘特征码
+	BYTE bIdDisk;//磁盘id
 	BYTE bIdPartition;//分区id
 	DWORD dwBlockStart;//文件起始块号
 	DWORD dwBlockEnd;//文件终止块号
@@ -215,6 +215,9 @@ struct Block
 			return -1;
 		}
 		return nPos = newPos;
+	}
+	void clear() {
+		memset(this, 0, sizeof(*this));
 	}
 
 	//Description:
