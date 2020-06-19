@@ -81,25 +81,46 @@ int main() {
         }
         else if (cmd.compare("open") == 0) {
             cin >> par;
-            //printf("文件号:%d\n", fopen(&par[0]));
+            printf("文件号:%d\n", fOpen(&par[0], FM_Write));
         }
         else if (cmd.compare("read") == 0) {
+            //cin >> par;
+            DWORD fileId;
+            int size;
+            cin >> fileId >> size;
+            char* buffer = new char[size];
+            memset(buffer, 0, size);
 
+            cout<<"实际读取字节数:"<<fRead(buffer, size, 1, fileId)<<endl;
+
+            printf("%s\n", buffer);
+            delete[] buffer;
         }
         else if (cmd.compare("write") == 0) {
+            DWORD fileId;
+            cin >> fileId >> par;
+
+            cout << "实际写入字节数:" << fWrite(&par[0], par.length() + 1, 1, fileId);
 
         }
         else if (cmd.compare("close") == 0) {
-
+            DWORD fileId;
+            cin >> fileId;
+            fClose(fileId);
         }
         else if (cmd.compare("mkdir") == 0) {
-
+            cin >> par;
+            dCreate(&par[0]);
         }
         else if (cmd.compare("rm") == 0) {
-
+            cin >> par;
+            bool isDeleteDir=0;
+            bool isRecursive=1;
+            cin >> isDeleteDir >> isRecursive;
+            dDelete(&par[0], isDeleteDir, isRecursive);
         }
         else if (cmd.compare("dir") == 0) {
-
+            showDir();
         }
         else if (cmd.compare("tree") == 0) {
             showDirTree();
