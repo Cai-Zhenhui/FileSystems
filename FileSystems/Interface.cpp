@@ -401,31 +401,61 @@ bool fClose(DWORD fileId)
 	return true;
 }
 
-bool fSearch(DWORD fileId)
+bool fSearch(char* szFileName)
 {
-	
-	return false;
+	//遍历
+	for (int i = 0; i < currentsFCB.size(); ++i) {
+		if (currentsFCB[i].fileType == FILETYPE::FT_DIRECTORY && i >= 2) {
+			dIntoSub(currentIIM[i].fileName);//操作会导致列表发生变化
+			fSearch(szFileName);
+		}
+		else if (currentsFCB[i].fileType == FILETYPE::FT_FILE && currentIIM[i] == szFileName) {
+			//找到
+			showCurrentDirectory();
+			char buffer[26 + MAXFileNameLength];
+			currentsFCB[i].timeCreate.sprint(buffer);
+			//遍历要稍显的目录文件
+			sprintf(buffer + 19, "       %s\n", currentIIM[i].fileName);
+			printf("%s", buffer);
+		}
+	}
+
+	dIntoSub(currentIIM[1].fileName);
+	return true;
 }
 
-bool dIntoSub(char* szFileName) {
+bool fCopy(char* szFileName, char* szTargetPath)
+{
 	if (!diskManagement.isLoad()) {
 		return false;
 	}
-	//检查文件名是否合法
-	if (!checkFileName(szFileName)) {
-		return false;
+	IndexItemMem iimOld;
+	SubFileControlBlock sfcbOld;
+
+	//遍历要显示的目录文件
+	for (int i = 0; i < currentsFCB.size(); ++i) {
+		if (currentIIM[i] == szFileName) {
+			//找到文件
+			iimOld = currentIIM[i];
+			sfcbOld = currentsFCB[i];
+		}
 	}
 
+	return true;
+}
+
+bool _dIntoSub(char* szFileName) {
 	//寻找要进入的子目录的文件块
 	int i = 0;
-	for ( ; i < currentIIM.size(); ++i) {
+	for (; i < currentIIM.size(); ++i) {
 		if (currentIIM[i] == szFileName) {
 			break;
 		}
 	}
 	if (i >= currentIIM.size()) {
 		return false;//子目录不存在
-	}else if (i == 0) {
+	}
+	else if (i == 0) {
 		//该目录
 		return true;
 	}
@@ -434,7 +464,7 @@ bool dIntoSub(char* szFileName) {
 			//根目录
 			return false;
 		}
-		else if(users.currentUser==(*(diskManagement.currentDirectory.end()-1))){
+		else if (users.currentUser == (*(diskManagement.currentDirectory.end() - 1))) {
 			//当前目录已经是该用户的根目录
 			return false;
 		}
@@ -453,10 +483,70 @@ bool dIntoSub(char* szFileName) {
 			}
 			diskManagement.currentDirectory.push_back(szFileName);
 		}
-		
+
 	}
 	//从指定块加载目录
 	diskManagement.readFCBItem(currentsFCB[i].dwIndexFAT);
+}
+bool fMove(char* szFileName, char* szTargetPath)
+{
+	return false;
+}
+bool fRename(char* szFileName, char* szNewFileName)
+{
+	if (!diskManagement.isLoad()) {
+		return false;
+	}
+
+	//遍历要显示的目录文件
+	int i = 0;
+	for (; i < currentsFCB.size(); ++i) {
+		if (currentIIM[i]==szFileName) {
+			//找到文件
+			break;
+		}
+	}
+
+	char szFileNameOld[MAXFileNameLength] = { 0 };
+	strcpy(szFileNameOld, currentIIM[i].fileName);//暂存文件名
+
+	currentIIM[i] = szNewFileName;
+
+	diskManagement.updateFCB(i, szFileNameOld);
+
+	//重新读取目录项
+	diskManagement.readFCBItem(currentsFCB[0].dwIndexFAT);
+
+	return true;
+}
+bool dIntoSub(char* szFileName) {
+	if (!diskManagement.isLoad()) {
+		return false;
+	}
+	//检查文件名是否合法
+	if (!checkFileName(szFileName)) {
+		//return false;
+	}
+	std::string strFileName(szFileName);
+	do
+	{
+		size_t pos = strFileName.find_first_of('\\');
+		std::string substr = strFileName.substr(0, pos);
+
+		_dIntoSub(&substr[0]);
+
+		if (pos == std::string::npos) {
+			//单级
+			break;
+		}
+		strFileName = strFileName.substr(pos + 1);
+		if (strFileName == "") {
+			//目录结束
+			break;
+		}
+	} while (true);
+	
+	
 	return true;
 }
 

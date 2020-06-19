@@ -65,6 +65,7 @@ int main() {
 
     std::string cmd;
     std::string par;
+    std::string par2;
     while (cin>>cmd)
     {
         if (cmd.compare("cd") == 0) {
@@ -78,6 +79,10 @@ int main() {
         else if (cmd.compare("del") == 0) {
             cin >> par;
             fDelete(&par[0]);
+        }
+        else if (cmd.compare("search") == 0) {
+            cin >> par;
+            fSearch(&par[0]);
         }
         else if (cmd.compare("open") == 0) {
             cin >> par;
@@ -135,6 +140,15 @@ int main() {
             DWORD diskId, partitionId;
             cin >> diskId >> partitionId;
             cout << diskManagement.format(diskId - 1, partitionId - 1) << endl;
+        }
+        else if (cmd == "createDisk") {
+            DWORD blocks;
+            cin >> blocks;
+            cout << diskManagement.generateDisk(BlockSize * blocks) << endl;
+        }
+        else if (cmd == "rename") {
+            cin >> par >> par2;
+            cout << fRename(&par[0],&par2[0]) << endl;
         }
         
         cout << endl;

@@ -97,7 +97,36 @@ bool fClose(_In_ DWORD fileId);
 //Return Value:
 //	true 执行成功
 //	false 执行失败
-bool fSearch(_In_ DWORD fileId);
+bool fSearch(_In_ char* szFileName);
+
+//Description:
+//	复制文件
+//Paramter: 
+//	_In_ char* szFileName 文件名
+//  _In_ char* szTargetPath 目标路径
+//Return Value:
+//	true 执行成功
+//	false 执行失败
+bool fCopy(_In_ char* szFileName, _In_ char* szTargetPath);
+
+//Description:
+//	移动文件
+//Paramter: 
+//	_In_ char* szFileName 文件名
+//  _In_ char* szTargetPath 目标路径
+//Return Value:
+//	true 执行成功
+//	false 执行失败
+bool fMove(_In_ char* szFileName, _In_ char* szTargetPath);
+
+//Description:
+//	重命名
+//Paramter: 
+//	_In_ char* szFileName 文件名
+//Return Value:
+//	true 执行成功
+//	false 执行失败
+bool fRename(_In_ char* szFileName, _In_ char* szNewFileName);
 
 //Description:
 //	进入当前目录下的一个子目录
