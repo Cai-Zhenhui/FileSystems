@@ -33,32 +33,42 @@ bool fDelete(_In_ char* szFileName);
 #define FM_Binary	0x04
 
 //Description:
-//	打开当前路径下的一个文件
+//	打开当前路径下的一个文件,返回文件号
 //Paramter: 
 //	_In_ char* szFileName 文件名
 //	_In_ BYTE bFileMode 打开方式
 //Return Value:
-//	true 执行成功
-//	false 执行失败
-bool fOpen(_In_ char* szFileName, _In_ BYTE bFileMode);
+//	0	打开失败
+//	>=0	打开成功
+DWORD fOpen(_In_ char* szFileName, _In_ BYTE bFileMode);
+
+//Description:
+//	读取已打开的文件
+//Paramter: 
+//	_In_reads_bytes_(_ElementSize* _ElementCount) void * _Buffer 的内容
+//  _In_ size_t _ElementSize 元素的大小
+//  _In_ size_t _ElementCount 元素的数量
+//  _In_ DWORD fileId 文件号
+//Return Value:
+//	DWORD 读取字节数
+DWORD fRead(_Out_writes_bytes_(_ElementSize* _ElementCount) void* _Buffer,
+    _In_ size_t _ElementSize,
+    _In_ size_t _ElementCount,
+    _In_ DWORD fileId);
 
 //Description:
 //	打开当前路径下的一个文件
 //Paramter: 
-//	_In_ char* szFileName 文件名
+//	_In_reads_bytes_(_ElementSize* _ElementCount) void * _Buffer 要写入的内容
+//  _In_ size_t _ElementSize 写入元素的大小
+//  _In_ size_t _ElementCount 写入元素的数量
+//  _In_ DWORD fileId 文件号
 //Return Value:
-//	true 执行成功
-//	false 执行失败
-bool fRead(_In_ char* szFileName);
-
-//Description:
-//	打开当前路径下的一个文件
-//Paramter: 
-//	_In_ char* szFileName 文件名
-//Return Value:
-//	true 执行成功
-//	false 执行失败
-bool fWrite(_In_ char* szFileName);
+//	DWORD 写入字节数
+DWORD fWrite(_In_reads_bytes_(_ElementSize* _ElementCount) void const* _Buffer,
+    _In_ size_t _ElementSize,
+    _In_ size_t _ElementCount,
+    _In_ DWORD fileId);
 
 //Description:
 //	关闭当前路径下的一个文件
@@ -67,7 +77,7 @@ bool fWrite(_In_ char* szFileName);
 //Return Value:
 //	true 执行成功
 //	false 执行失败
-bool fClose(_In_ char* szFileName);
+bool fClose(_In_ DWORD fileId);
 
 //Description:
 //	进入当前目录下的一个子目录
@@ -86,6 +96,15 @@ bool dIntoSub(_In_ char* szFileName);
 //	true 执行成功
 //	false 执行失败
 bool dCreate(_In_ char* szFileName);
+
+//Description:
+//	在当前路径下创建一个文件夹
+//Paramter: 
+//	_In_ User& user 要创建的用户
+//Return Value:
+//	true 执行成功
+//	false 执行失败
+bool dCreate(_In_ User& user);
 
 //Description:
 //	在当前路径下删除一个文件夹下的文件

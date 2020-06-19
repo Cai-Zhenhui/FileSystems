@@ -42,6 +42,9 @@ struct User
 	BYTE id;
 	char username[MAXUsernameLength];
 	char password[MAXPasswordLength];
+	bool operator==(User& obj2);
+	bool operator==(char* username);
+	bool operator==(std::string strUserName);
 };
 typedef struct User User;
 struct PhysicalAddress
@@ -120,6 +123,7 @@ struct IndexItemMem
 
 	DWORD fileId;//文件号 //文件打开之后的添加的新内容
 	BYTE bFileMode;
+	DWORD nPos;
 	PhysicalAddress physicalAddress;//文件物理地址
 
 	//函数
@@ -130,6 +134,7 @@ struct IndexItemMem
 	IndexItemMem& operator=(struct FileControlBlock& obj2);
 	IndexItemMem& operator=(char * szfileName2);
 	bool operator==(char* fileName2);
+	bool operator==(DWORD fileId2);
 };
 typedef struct IndexItemMem IndexItemMem;
 
@@ -164,22 +169,22 @@ struct Block
 		memset(this, 0, sizeof(*this));
 	}
 	int read(void* Des, int size) {
-		if (size >= BlockSize || size <= 0) {
+		if (size > BlockSize || size <= 0) {
 			return 0;
 		}
-		if (nPos + size >= BlockSize) {
-			size = (BlockSize - 1) - nPos;
+		if (nPos + size > BlockSize) {
+			size = BlockSize - nPos;
 		}
 		memcpy(Des, buffer + nPos, size);
 		nPos += size;
 		return size;
 	}
 	int write(void* Src, int size) {
-		if (size >= BlockSize || size <= 0) {
+		if (size > BlockSize || size <= 0) {
 			return 0;
 		}
-		if (nPos + size >= BlockSize) {
-			size = (BlockSize - 1) - nPos;
+		if (nPos + size > BlockSize) {
+			size = BlockSize - nPos;
 		}
 		memcpy(buffer + nPos, Src, size);
 		nPos += size;
@@ -229,3 +234,6 @@ struct Block
 #include "DiskManagement.h"
 //磁盘管理
 extern DiskManagement diskManagement;
+
+#include "User.h"
+extern Users users;

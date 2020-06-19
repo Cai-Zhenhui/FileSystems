@@ -9,6 +9,8 @@ std::vector<SubFileControlBlock> currentsFCB;
 //´ÅÅÌ¹ÜÀí
 DiskManagement diskManagement;
 
+Users users;
+
 SubFileControlBlock::SubFileControlBlock() {
 	dwFileLength = 0;
 }
@@ -45,11 +47,17 @@ IndexItemMem& IndexItemMem::operator=(char* szfileName2)
 {
 	memset(this->fileName, 0, MAXFileNameLength);
 	strcpy(this->fileName, szfileName2);
+	return *this;
 }
 
 bool IndexItemMem::operator==(char* fileName2)
 {
 	return strcmp(fileName, fileName2) == 0;
+}
+
+bool IndexItemMem::operator==(DWORD fileId2)
+{
+	return this->fileId == fileId2;
 }
 
 FileControlBlock::FileControlBlock()
@@ -101,4 +109,19 @@ FileControlBlock& FileControlBlock::operator=(SubFileControlBlock& obj2)
 {
 	memcpy(&this->sFCB, &obj2, sizeof(struct SubFileControlBlock));
 	return *this;
+}
+
+bool User::operator==(User& obj2)
+{
+	return (strcmp(this->username,obj2.username)==0) && (strcmp(this->password, obj2.password) == 0);
+}
+
+bool User::operator==(char* username)
+{
+	return (strcmp(this->username, username) == 0);
+}
+
+bool User::operator==(std::string strUserName)
+{
+	return (strcmp(this->username, strUserName.c_str()) == 0);
 }

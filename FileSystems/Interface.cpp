@@ -61,6 +61,7 @@ bool fCreate(char* szFileName)
 		return false;//创建失败 申请块失败
 	}
 	fcb.sFCB.dwFileLength = 1;
+	fcb.sFCB.bOwner = users.currentUser.id;
 	fcb.sFCB.fileType = FILETYPE::FT_FILE;
 	fcb.sFCB.wLinkTimes = 1;
 
@@ -115,25 +116,26 @@ bool fDelete(char* szFileName)
 Block blockBuffer;
 std::vector<IndexItemMem> openListIIM;
 std::vector<SubFileControlBlock> openListSFCB;
-bool fOpen(char* szFileName, BYTE bFileMode)
+DWORD fOpen(char* szFileName, BYTE bFileMode)
 {
+	DWORD ret = 0;
 	if (!diskManagement.isLoad()) {
-		return false;
+		return ret;
 	}
 	//检查文件名是否合法
 	if (!checkFileName(szFileName)) {
-		return false;
+		return ret;
 	}
 
 	//寻找要操作的文件
 	int i = 0;
 	for (; i < currentIIM.size(); ++i) {
-		if (currentIIM[i] == szFileName) {
+		if (currentIIM[i] == szFileName && currentsFCB[i].fileType==FILETYPE::FT_FILE) {
 			break;
 		}
 	}
 	if (i >= currentIIM.size()) {
-		return false;//目标文件不存在
+		return ret;//目标文件不存在
 	}
 
 	switch (bFileMode)
@@ -144,11 +146,26 @@ bool fOpen(char* szFileName, BYTE bFileMode)
 	}
 	case FM_Write: {
 		//只写模式下只能被打开一个
+		//检查该文件是否被打开
+		for (int j = 0; j < openListIIM.size(); ++j) {
+			if (openListIIM[j] == szFileName) {
+				//已打开
+				return ret;
+			}
+		}
 		break;
 	}
 	case FM_Read | FM_Write: {
+		//读写模式下只能被打开一个
+		for (int j = 0; j < openListIIM.size(); ++j) {
+			if (openListIIM[j] == szFileName) {
+				//已打开
+				return ret;
+			}
+		}
 		break;
 	}
+						   /*
 	case FM_Read | FM_Binary: {
 		break;
 	}
@@ -157,10 +174,11 @@ bool fOpen(char* szFileName, BYTE bFileMode)
 	}
 	case FM_Read | FM_Write|FM_Binary: {
 		break;
-	}
+	}*/
 	}
 
 	IndexItemMem iim;
+	iim.nPos = 0;
 	iim.fileId = openListIIM.size() + 1;
 	iim.physicalAddress.bIdDisk = diskManagement.currentDisk->bIdDisk;
 	iim.physicalAddress.bIdPartition = diskManagement.currentDisk->currentPartition->ph.bIdPartition;
@@ -168,7 +186,180 @@ bool fOpen(char* szFileName, BYTE bFileMode)
 	iim.bFileMode = bFileMode;
 	openListIIM.push_back(iim);
 	openListSFCB.push_back(currentsFCB[i]);
+	
+	ret = iim.fileId;
+	return ret;
+}
 
+DWORD fRead(void* _Buffer, size_t _ElementSize, size_t _ElementCount, DWORD fileId)
+{
+	size_t size = _ElementSize * _ElementCount;
+	DWORD ret = 0;
+	if (size <= 0) {
+		return ret;
+	}
+	int i = 0;//在一打开目录中的索引
+	for (; i < openListIIM.size(); ++i) {
+		if (openListIIM[i] == fileId) {
+			break;
+		}
+	}
+	if (i >= openListIIM.size()) {
+		return ret;//目标文件不存在
+	}
+
+	DWORD prefat = openListSFCB[i].dwIndexFAT + openListIIM[i].nPos / BlockSize;//计算当前游标所在块
+	DWORD fat = prefat;
+	DWORD blockOffset;
+	DWORD bufferOffset = 0;
+	PhysicalAddress pa = openListIIM[i].physicalAddress;
+	do
+	{
+		blockOffset = openListIIM[i].nPos % BlockSize;
+		diskManagement.readBlock(pa, fat, &blockBuffer);
+
+		//读取文件游标所在块
+		blockBuffer.setPos(blockOffset, SEEK_SET);
+
+		if ((blockOffset + size) < BlockSize) {
+			//要读取内容没有超过当前块 直接写入
+			blockBuffer.read((BYTE*)_Buffer+ bufferOffset, size);
+			openListIIM[i].nPos += size;
+			bufferOffset += size;
+
+			ret = size;
+			break;
+		}
+		else {
+			//要读取内容超过当前块
+			//读取部分
+			size -= (BlockSize - blockOffset);//剩余
+			blockBuffer.read((BYTE*)_Buffer + bufferOffset, BlockSize - blockOffset);
+
+			openListIIM[i].nPos += (BlockSize - blockOffset);
+			bufferOffset += (BlockSize - blockOffset);
+
+			//尝试进入下一块
+			fat = diskManagement.currentDisk->currentPartition->FAT[prefat];
+
+			if (fat != EOB) {
+				//进入下一块
+				prefat = fat;
+			}
+			else {
+				break;
+			}
+		}
+	} while (true);
+
+	openListSFCB[i].timeAccess = Date();
+	return ret;
+}
+
+DWORD fWrite(void const* _Buffer, size_t _ElementSize, size_t _ElementCount, DWORD fileId)
+{
+	size_t size = _ElementSize * _ElementCount;
+	DWORD ret = 0;
+	if (size <= 0) {
+		return ret;
+	}
+	int i = 0;//在一打开目录中的索引
+	for (; i < openListIIM.size(); ++i) {
+		if (openListIIM[i] == fileId) {
+			break;
+		}
+	}
+	if (i >= openListIIM.size()) {
+		return ret;//目标文件不存在
+	}
+
+	DWORD prefat = openListSFCB[i].dwIndexFAT + openListIIM[i].nPos / BlockSize;//计算当前游标所在块
+	DWORD fat = prefat;
+	DWORD blockOffset;
+	DWORD bufferOffset = 0;
+	PhysicalAddress pa = openListIIM[i].physicalAddress;
+	do
+	{
+		blockOffset = openListIIM[i].nPos % BlockSize;
+		diskManagement.readBlock(pa, fat, &blockBuffer);
+		
+		//读取文件游标所在块
+		blockBuffer.setPos(blockOffset, SEEK_SET);
+
+		if ((blockOffset + size) < BlockSize) {
+			//要写入内容没有超过当前块 直接写入
+			blockBuffer.write((BYTE*)_Buffer + bufferOffset, size);
+			openListIIM[i].nPos += size;
+			bufferOffset += size;
+
+			//写回块
+			diskManagement.writeBlock(pa, fat, &blockBuffer);
+			ret = size;
+			break;
+		}
+		else {
+			//要写入内容超过当前块
+			//写入部分
+			size -= (BlockSize - blockOffset);//剩余
+			blockBuffer.write((BYTE*)_Buffer + bufferOffset, BlockSize - blockOffset);
+
+			openListIIM[i].nPos += (BlockSize - blockOffset);
+			bufferOffset += (BlockSize - blockOffset);
+
+			//写回块
+			diskManagement.writeBlock(pa, fat, &blockBuffer);
+
+			//尝试进入下一块
+			fat = diskManagement.currentDisk->currentPartition->FAT[prefat];
+
+			if (fat != EOB) {
+				//进入下一块
+				prefat = fat;
+			}
+			else {
+				//文件没有下一块了 需要申请
+				fat = diskManagement.mallocBlock(prefat);
+				if (fat == 0) {
+					return ret;
+				}
+				prefat = fat;
+			}
+		}
+	} while (true);
+	openListSFCB[i].dwFileLength += ret;
+	openListSFCB[i].timeModify = Date();
+	openListSFCB[i].timeAccess = openListSFCB[i].timeModify;
+	return ret;
+}
+
+bool fClose(DWORD fileId)
+{
+	int i = 0;//在一打开目录中的索引
+	for (; i < openListIIM.size(); ++i) {
+		if (openListIIM[i] == fileId) {
+			break;
+		}
+	}
+	if (i >= openListIIM.size()) {
+		return false;//目标文件不存在
+	}
+
+	int j = 0;//在当前目录下的索引
+	for (; j < currentIIM.size(); ++j) {
+		if (currentIIM[j] == openListIIM[i].fileName) {
+			currentIIM[j] = openListIIM[i];
+			currentsFCB[j] = openListSFCB[i];
+			break;
+		}
+	}
+	if (j >= currentIIM.size()) {
+		return false;//目标文件不存在
+	}
+
+	char szFileNameOld[MAXFileNameLength] = { 0 };
+	strcpy(szFileNameOld, openListIIM[i].fileName);//暂存要删除的文件名
+
+	diskManagement.updateFCB(j, szFileNameOld);
 	return true;
 }
 
@@ -199,12 +390,26 @@ bool dIntoSub(char* szFileName) {
 			//根目录
 			return false;
 		}
+		else if(users.currentUser==(*(diskManagement.currentDirectory.end()-1))){
+			//当前目录已经是该用户的根目录
+			return false;
+		}
 		//上级目录
 		diskManagement.currentDirectory.pop_back();
 	}
 	else {
 		//子目录
-		diskManagement.currentDirectory.push_back(szFileName);
+		if (users.currentUser.id == 0) {//root用户可以直接进入
+			diskManagement.currentDirectory.push_back(szFileName);
+		}
+		else {
+			if (currentsFCB[i].bOwner != users.currentUser.id) {
+				//要进入的目录不是该用户的目录
+				return false;
+			}
+			diskManagement.currentDirectory.push_back(szFileName);
+		}
+		
 	}
 	//从指定块加载目录
 	diskManagement.readFCBItem(currentsFCB[i].dwIndexFAT);
@@ -231,6 +436,7 @@ bool dCreate(char* szFileName)
 		return false;//创建失败 申请块失败
 	}
 	fcb.sFCB.dwFileLength = BlockSize;
+	fcb.sFCB.bOwner = users.currentUser.id;
 	fcb.sFCB.fileType = FILETYPE::FT_DIRECTORY;
 	fcb.sFCB.wLinkTimes = 1;
 
@@ -247,6 +453,7 @@ bool dCreate(char* szFileName)
 	//创建并写入 . 目录项
 	FileControlBlock fcb_(".");
 	fcb_.sFCB.dwFileLength = BlockSize;
+	fcb_.sFCB.bOwner = users.currentUser.id;
 	fcb_.sFCB.fileType = FILETYPE::FT_DIRECTORY;
 	fcb_.sFCB.dwIndexFAT = fcb.sFCB.dwIndexFAT;//指向当前目录
 	block.write(&fcb_, sizeof(fcb_));
@@ -254,10 +461,70 @@ bool dCreate(char* szFileName)
 	//创建并写入 .. 目录项
 	FileControlBlock fcb__("..");
 	fcb__.sFCB.dwFileLength = BlockSize;
+	fcb__.sFCB.bOwner = users.currentUser.id;
 	fcb__.sFCB.fileType = FILETYPE::FT_DIRECTORY;
 	fcb__.sFCB.dwIndexFAT = currentsFCB[0].dwIndexFAT;//指向上级目录(这里的上级目录 指的是以新目录作为当前目录)
 	block.write(&fcb__, sizeof(fcb__));
 	
+	PhysicalAddress pa;
+	pa.bIdDisk = diskManagement.currentDisk->bIdDisk;
+	pa.bIdPartition = diskManagement.currentDisk->currentPartition->bIdPartition;
+	diskManagement.writeBlock(pa, fcb.sFCB.dwIndexFAT, &block);//把该目录对应的块写回
+
+	return true;
+}
+
+bool dCreate(User& user)
+{
+	char* szFileName = user.username;
+	if (!diskManagement.isLoad()) {
+		return false;
+	}
+	//检查文件名是否合法
+	if (!checkFileName(szFileName)) {
+		return false;
+	}
+	if (isExist(szFileName)) {
+		return false;
+	}
+
+	//创建该文件夹的文件控制块
+	FileControlBlock fcb(szFileName);
+	fcb.sFCB.dwIndexFAT = diskManagement.mallocBlock();
+	if (fcb.sFCB.dwIndexFAT == 0) {
+		return false;//创建失败 申请块失败
+	}
+	fcb.sFCB.dwFileLength = BlockSize;
+	fcb.sFCB.bOwner = user.id;
+	fcb.sFCB.fileType = FILETYPE::FT_DIRECTORY;
+	fcb.sFCB.wLinkTimes = 1;
+
+	//将该文件内存索引结构写入当前目录
+	IndexItemMem iim(fcb);
+	SubFileControlBlock sfcb(fcb);
+	currentIIM.push_back(iim);
+	currentsFCB.push_back(sfcb);
+	//更新
+	diskManagement.insertFCB();
+
+	//不用读取block  创建之后将数据写入
+	Block block;
+	//创建并写入 . 目录项
+	FileControlBlock fcb_(".");
+	fcb_.sFCB.dwFileLength = BlockSize;
+	fcb_.sFCB.bOwner = user.id;
+	fcb_.sFCB.fileType = FILETYPE::FT_DIRECTORY;
+	fcb_.sFCB.dwIndexFAT = fcb.sFCB.dwIndexFAT;//指向当前目录
+	block.write(&fcb_, sizeof(fcb_));
+
+	//创建并写入 .. 目录项
+	FileControlBlock fcb__("..");
+	fcb__.sFCB.dwFileLength = BlockSize;
+	fcb__.sFCB.bOwner = user.id;
+	fcb__.sFCB.fileType = FILETYPE::FT_DIRECTORY;
+	fcb__.sFCB.dwIndexFAT = currentsFCB[0].dwIndexFAT;//指向上级目录(这里的上级目录 指的是以新目录作为当前目录)
+	block.write(&fcb__, sizeof(fcb__));
+
 	PhysicalAddress pa;
 	pa.bIdDisk = diskManagement.currentDisk->bIdDisk;
 	pa.bIdPartition = diskManagement.currentDisk->currentPartition->bIdPartition;
@@ -351,6 +618,7 @@ void showCurrentDirectory()
 	for (int i = 0; i < diskManagement.currentDirectory.size(); ++i) {
 		printf("%s\\", diskManagement.currentDirectory[i].c_str());
 	}
+	printf(">");
 }
 
 void showDir()
